@@ -37,8 +37,8 @@ GSM gsmAccess;
 HardSerialLCD LCD;
 
 // URL, path & port (for example: arduino.cc)
-char server[] = "arduino.cc";
-char path[] = "/asciilogo.txt";
+char server[] = "forktheq.karankamath.com";
+char path[] = "/getorders?num=2";
 int port = 80; // port 80 is the default for HTTP
 
 void setup()
@@ -46,14 +46,22 @@ void setup()
   // initialize serial communications and wait for port to open:
   Serial.begin(9600);
   LCD.begin();
+  delay(10);
+  LCD.backlight();
+  delay(10);
+  LCD.clear();
+  delay(10);
+  char temp2[100] = "hello";
+  LCD.print(temp2);
+  
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
 
-  Serial.println("Starting Arduino web client.");
+  Serial.println("Starting Fork the Q web client.");
   // connection state
   boolean notConnected = true;
-  LCD.print("YOLO");
+  LCD.print("Hello Hawker");
   // After starting the modem with GSM.begin()
   // attach the shield to the GPRS network with the APN, login and password
   while (notConnected)
@@ -88,6 +96,7 @@ void setup()
     // if you didn't get a connection to the server:
     Serial.println("connection failed");
   }
+  
 }
 
 void loop()
@@ -98,7 +107,9 @@ void loop()
   {
     char c = client.read();
     Serial.print(c);
+    LCD.print(c);
   }
+  
 
   // if the server's disconnected, stop the client:
   if (!client.available() && !client.connected())
@@ -107,14 +118,7 @@ void loop()
     Serial.println("disconnecting.");
     client.stop();
     
-    LCD.clear();
-    delay(10);
-    LCD.print('n');
-    delay(1000);
-    LCD.clear();
-    delay(1000);
-    LCD.print('m');
-    delay(10000);
+    
 
     // do nothing forevermore:
     for (;;)

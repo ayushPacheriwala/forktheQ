@@ -276,7 +276,7 @@ void retreiveOrders(){
 //    orderA.extras = buffer[12];
     
   int oldRemaining = remainingOrders; 
-  if((line-12)/3)>0)
+  if(((line-12)/3)>0)
     remainingOrders = oldRemaining + (line-12)/3;
  
  

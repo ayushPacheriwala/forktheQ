@@ -104,8 +104,17 @@ const int noCMD = -2;
     LCD.clear();
     delay(10);
     char temp2[100] = "hello";
+    delay(10);
     LCD.print(temp2);
   }
+  
+  void displayMsg(String dispMsg) {
+    Serial.println(dispMsg);
+    LCD.clear();
+    delay(10);
+    LCD.print(dispMsg.c_str());    
+  }
+  
 //-------------------------------------------setup func end -----------------------------------------------------------
 void setup()
 {
@@ -113,10 +122,10 @@ void setup()
   Serial.begin(9600);
   lcdSetup();
 
-  Serial.println("Starting Fork the Q web client.");
+  displayMsg("Starting Fork the Q web client.");
   // connection state
   boolean notConnected = true;
-  LCD.print("Hello Hawker");
+  
   // After starting the modem with GSM.begin()
   // attach the shield to the GPRS network with the APN, login and password
   while (notConnected)
@@ -126,12 +135,12 @@ void setup()
       notConnected = false;
     else
     {
-      Serial.println("Not connected");
+      displayMsg("Not connected");
       delay(1000);
     }
   }
 
-  Serial.println("connecting...");
+  displayMsg("connecting...");
 
   // if you get a connection, report back via serial:
   if (client.connect(server, port))
@@ -149,45 +158,48 @@ void setup()
   else
   {
     // if you didn't get a connection to the server:
-    Serial.println("connection failed");
+    displayMsg("connection failed");
   }
   
+  client.stop();
+  
   index = 0;
+  remainingOrders = 0;
   
   //pull orders from cloud.
   //displayOrders(index);
   
 
   //-----------------------testing------------------------\
-  remainingOrders = 4;
-  order orderA;
-  
-  orderA.id = "000";
-  orderA.menuItem = "1x Chicken Rice";
-  orderA.extras = "No chilli";
-  
-  orderArray[0] = orderA;
-  
-  orderA.id = "101";
-  orderA.menuItem = "2x Nasi Lemak";
-  orderA.extras = "extra spicy";
-  
-  orderArray[1] = orderA;
-  
-  orderA.id = "202";
-  orderA.menuItem = "1x Satay Chicken";
-  orderA.extras = "w pepper sauce";
-  
-  orderArray[2] = orderA;
-  
-  orderA.id = "303";
-  orderA.menuItem = "1x Laksa";
-  orderA.extras = "more curry";
-  
-  orderArray[3] = orderA;
-
-
-  //-----------------------------------------------------
+//  remainingOrders = 4;
+//  order orderA;
+//  
+//  orderA.id = "000";
+//  orderA.menuItem = "1x Chicken Rice";
+//  orderA.extras = "No chilli";
+//  
+//  orderArray[0] = orderA;
+//  
+//  orderA.id = "101";
+//  orderA.menuItem = "2x Nasi Lemak";
+//  orderA.extras = "extra spicy";
+//  
+//  orderArray[1] = orderA;
+//  
+//  orderA.id = "202";
+//  orderA.menuItem = "1x Satay Chicken";
+//  orderA.extras = "w pepper sauce";
+//  
+//  orderArray[2] = orderA;
+//  
+//  orderA.id = "303";
+//  orderA.menuItem = "1x Laksa";
+//  orderA.extras = "more curry";
+//  
+//  orderArray[3] = orderA;
+//
+//
+//  //-----------------------------------------------------
 }
 
 
@@ -255,25 +267,19 @@ void loop()
         //get the updated array from the server;
         LCD.clear();
         LCD.print("Order Completed :");
-        LCD.print((orderArray[index].menuItem).c_str());
-        remainingOrders--;
-        for (int i = index; i < remainingOrders; i++) {
-          orderArray[i] = orderArray[i+1];
-        }
-        delay(1000);        
+//        LCD.print((orderArray[index].menuItem).c_str());
+//        remainingOrders--;
+//        for (int i = index; i < remainingOrders; i++) {
+//          orderArray[i] = orderArray[i+1];
+//        }
+//        delay(1000);        
         index = 0;
         break;
       case refreshCMD:
         //update the array from the server
         LCD.clear();
         LCD.print("NEW: ");
-        index = remainingOrders;
-        orderArray[index].id = "555";
-        orderArray[index].menuItem = "2x Laksa";
-        orderArray[index].extras = "1 spicy|1 normal";
-        remainingOrders++;
-        LCD.print((orderArray[index].menuItem).c_str());
-        LCD.print((orderArray[index].extras).c_str());
+        retreiveOrders();
         delay (1000);
         
         index = 0;  
@@ -319,6 +325,96 @@ void loop()
 //       ;
 //   }
 // }
+
+void retreiveOrders(){
+  
+    displayMsg("refreshing...");
+    char orderPath[] = "/getorders?num=2";
+    // if you get a connection, report back via serial:
+    if (client.connect(server, port))
+    {
+      Serial.println("connected");
+      // Make a HTTP request:
+      client.print("GET ");
+      client.print(orderPath);
+      client.println(" HTTP/1.1");
+      client.print("Host: ");
+      client.println(server);
+      client.println("Connection: close");
+      client.println();
+    } 
+    else
+    {
+      // if you didn't get a connection to the server:
+      Serial.println("connection failed");
+    }
+  
+    String temp = "";
+    String buffer[10];
+    
+    int count = 0;
+    int line = 1;
+    while (client.available()){
+      char c = client.read();
+      if (c != '\n')
+        temp += c;
+      else {
+        Serial.println(temp);
+        buffer[line-1] = temp;
+        temp = "";
+        line++;
+      }
+    }
+    
+    remainingOrders = line/3;
+    Serial.print(remainingOrders);
+    Serial.println(remainingOrders);
+    
+    for (int i = 0; i < remainingOrders; i++) {
+      order orderA; 
+      
+      orderA.id = buffer[i*3];
+      orderA.menuItem = buffer[i*3+1];
+      orderA.extras = buffer[i*3+2];
+      
+      orderArray[i] = orderA;
+      Serial.print("Order No. : ");
+      Serial.print(i+1);
+      Serial.println(orderArray[i].menuItem);
+    }
+    
+    
+//  }
+//  String buffer[10] = {""};
+//  int num = 0;
+//  for( int i = 0; i<count; i++){
+//    if(temp[i] != '\n'){
+//      buffer[num] += temp[i];
+//    }else{
+//      num ++;
+//    }
+//    if (num%3 = 0)
+//  }
+//  for (int j = 0; j<2; j++){
+//  order orderA;
+//  
+//  orderA.id = buffer[j];
+//  orderA.menuItem = bufffer[j+1];
+//  orderA.extras = buffer[j+2];
+//  
+//  orderArray[j] = orderA;
+//  }
+//   
+
+  // if the server's disconnected, stop the client:
+  if (!client.available() && !client.connected())
+  {
+    Serial.println();
+    Serial.println("disconnecting.");
+    client.stop();
+  }
+  
+}
 
 
 

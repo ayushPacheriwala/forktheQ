@@ -6,8 +6,8 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 // if you don't want to use DNS (and reduce your sketch size)
 // use the numeric IP instead of the name for the server:
 //IPAddress server(74,125,232,128);  // numeric IP for Google (no DNS)
-char server[] = "www.arduino.cc";    // name address for Google (using DNS)
-char path[] = "/asciilogo.txt";
+char server[] = "forktheq.karankamath.com";
+char path[] = "/getorders?num=2";
 
 // Set the static IP address to use if the DHCP fails to assign
 IPAddress ip(192, 168, 0, 177);
